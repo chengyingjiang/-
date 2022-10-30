@@ -4,7 +4,7 @@
       <slot name="formItem" :row="{ formData, isAdd }"></slot>
     </el-form>
     <div slot="footer" class="dialog-footer">
-      <el-button>取 消</el-button>
+      <el-button @click="boolShow = false">取 消</el-button>
       <el-button type="primary" @click="submitFn">确 定</el-button>
     </div>
   </el-dialog>

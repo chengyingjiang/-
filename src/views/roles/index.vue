@@ -2,7 +2,9 @@
   <div class="roles">
     <bread-crumb :menuList="menuList"></bread-crumb>
     <el-card>
-      <el-button type="primary" @click="add">添加角色</el-button>
+      <el-button type="primary" @click="addDialogVisible = true"
+        >添加角色</el-button
+      >
       <!-- 
         border	是否带有纵向边框	boolean	—	false
         data	显示的数据	array
@@ -69,10 +71,18 @@
         <el-table-column label="角色描述" prop="roleDesc"></el-table-column>
         <el-table-column label="操作">
           <template slot-scope="{ row }">
-            <el-button type="primary" icon="el-icon-edit" size="mini"
+            <el-button
+              type="primary"
+              icon="el-icon-edit"
+              size="mini"
+              @click="edit(row)"
               >编辑</el-button
             >
-            <el-button type="danger" icon="el-icon-delete" size="mini"
+            <el-button
+              type="danger"
+              icon="el-icon-delete"
+              size="mini"
+              @click="deleteFn(row.id)"
               >删除</el-button
             >
             <el-button
@@ -86,6 +96,36 @@
         </el-table-column>
       </el-table>
     </el-card>
+    <!-- 添加角色 -->
+    <el-dialog title="添加用户" :visible.sync="addDialogVisible">
+      <el-form ref="addUsersRef" :model="Formobj" :rules="usersRules">
+        <el-form-item label="角色名称" prop="roleName" label-width="80px">
+          <el-input v-model="Formobj.roleName"></el-input>
+        </el-form-item>
+        <el-form-item label="角色描述" prop="roleDesc" label-width="80px">
+          <el-input v-model="Formobj.roleDesc"></el-input>
+        </el-form-item>
+      </el-form>
+      <div slot="footer">
+        <el-button @click="addDialogVisible = false">取 消</el-button>
+        <el-button type="primary" @click="addSubmit">确 定</el-button>
+      </div>
+    </el-dialog>
+    <!-- 编辑角色 -->
+    <el-dialog title="编辑角色" :visible.sync="editDialogVisible">
+      <el-form ref="editUsersRef" :model="Formobj" :rules="usersRules">
+        <el-form-item label="角色名称" prop="roleName" label-width="80px">
+          <el-input v-model="Formobj.roleName"></el-input>
+        </el-form-item>
+        <el-form-item label="角色描述" prop="roleDesc" label-width="80px">
+          <el-input v-model="Formobj.roleDesc"></el-input>
+        </el-form-item>
+      </el-form>
+      <div slot="footer">
+        <el-button @click="editDialogVisible = false">取 消</el-button>
+        <el-button type="primary" @click="editSubmit">确 定</el-button>
+      </div>
+    </el-dialog>
     <!-- 分配权限 -->
     <el-dialog :visible.sync="setRightDialogVisible" title="分配权限">
       <!-- data	展示数据	array
@@ -104,7 +144,7 @@
       >
       </el-tree>
       <template #footer>
-        <el-button>取消</el-button>
+        <el-button @click="setRightDialogVisible = false">取消</el-button>
         <el-button type="primary" @click="setRights">确定</el-button>
       </template>
     </el-dialog>
@@ -112,7 +152,14 @@
 </template>
 
 <script>
-import { getRole, delRoleRight, setRoleRight } from "@/api/role";
+import {
+  getRole,
+  delRoleRight,
+  setRoleRight,
+  addUser,
+  editUser,
+  deleteUser,
+} from "@/api/role";
 import { getRight } from "@/api/right";
 import { getLeafkeys } from "@/utils/tool";
 import BreadCrumb from "@/components/BreadCrumb.vue";
@@ -123,6 +170,8 @@ export default {
       menuList: ["权限管理", "角色列表"],
       roles: [],
       setRightDialogVisible: false,
+      addDialogVisible: false,
+      editDialogVisible: false,
       rightsList: [], //权限列表
       // label	指定节点标签为节点对象的某个属性值	string, function(data, node)	—	—
       // children	指定子树为节点对象的某个属性值	string
@@ -132,6 +181,16 @@ export default {
       },
       defaultKeys: [],
       roleid: "",
+      Formobj: {
+        roleName: "",
+        roleDesc: "",
+      },
+      usersRules: {
+        roleName: [
+          { required: true, message: "请输入用户名", trigger: "blur" },
+        ],
+        roleDesc: [{ required: true, message: "请输入密码", trigger: "blur" }],
+      },
     };
   },
   mounted() {
@@ -188,6 +247,57 @@ export default {
       this.setRightDialogVisible = false;
       // 提示
       this.$message.success("角色授权成功");
+    },
+    async addSubmit() {
+      this.$refs[addUsersRef].validate(async (valid) => {
+        if (valid) {
+          await addUser(this.Formobj);
+          this.getData();
+          this.addDialogVisible = false;
+          this.$message.success("添加成功");
+        } else {
+          console.log("验证错误");
+        }
+      });
+    },
+    edit(row) {
+      this.Formobj = row;
+      this.editDialogVisible = true;
+    },
+    async editSubmit() {
+      this.$refs[editUsersRef].validate(async (valid) => {
+        if (valid) {
+          await editUser(this.Formobj.id, this.Formobj);
+          this.$message.success("修改成功");
+          this.editDialogVisible = false;
+        } else {
+          console.log("验证错误");
+        }
+      });
+    },
+    async deleteFn(id) {
+      this.$confirm("确定要永久删除该条数据吗?", "提示", {
+        confirmButtonText: "确定",
+        cancelButtonText: "取消",
+        type: "warning",
+      })
+        .then(async () => {
+          // 点击确定 请求删除的api接口
+          await deleteUser(id);
+          // 重新渲染数据
+          this.getData();
+          // 提示
+          this.$message({
+            type: "success",
+            message: "删除成功!",
+          });
+        })
+        .catch(() => {
+          this.$message({
+            type: "info",
+            message: "已取消删除",
+          });
+        });
     },
   },
 };

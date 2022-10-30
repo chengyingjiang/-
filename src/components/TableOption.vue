@@ -9,6 +9,11 @@
           :key="item.index"
         ></el-table-column>
       </template>
+      <el-table-column label="状态">
+        <template slot-scope="{ row }">
+          <slot name="state" :row="row"></slot>
+        </template>
+      </el-table-column>
       <el-table-column label="操作">
         <template slot-scope="{ row }">
           <el-button

@@ -62,3 +62,26 @@ export function delCate(id) {
     method: "delete",
   });
 }
+
+export function editGoods(id, data) {
+  return request({
+    url: `goods/${id}`,
+    method: "put",
+    data,
+  });
+}
+
+export function deleteGoods(id) {
+  return request({
+    url: `goods/${id}`,
+    method: "delete",
+  });
+}
+
+export function editCate(id, data) {
+  return request({
+    url: `categories/${id}`,
+    method: "put",
+    data,
+  });
+}

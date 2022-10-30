@@ -32,6 +32,15 @@
         @editEvent="edit"
         @delEvent="deleteFn"
       >
+        <template #state="{ row }">
+          <el-switch
+            v-model="row.mg_state"
+            active-color="#13ce66"
+            inactive-color="#ff4949"
+            @change="changState(row)"
+          >
+          </el-switch>
+        </template>
         <template #setting="{ row }">
           <el-tooltip
             class="item"
@@ -70,7 +79,7 @@ current-change	currentPage 改变时会触发	当前页
       @sumEvent="submitFun"
     >
       <template #formItem="{ row }">
-        <el-form-item prop="username" label="用户名" label-width="80px">
+        <el-form-item label="用户名" label-width="80px">
           <el-input
             :disabled="Boolean(row.formData.id)"
             v-model="row.formData.username"
@@ -148,8 +157,6 @@ export default {
       rolesVisible: false,
       // 添加
       formVisible: false, //添加弹框的显示隐藏
-      // 表单域标签的宽度
-      formLabelWidth: "120px",
       formObj: {
         username: "",
         password: "",

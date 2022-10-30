@@ -21,3 +21,26 @@ export function setRoleRight(roleid, data) {
     data,
   });
 }
+
+export function addUser(data) {
+  return request({
+    url: "roles",
+    method: "post",
+    data,
+  });
+}
+
+export function editUser(id, data) {
+  return request({
+    url: `roles/${id}`,
+    method: "put",
+    data,
+  });
+}
+
+export function deleteUser(id) {
+  return request({
+    url: `roles/${id}`,
+    method: "delete",
+  });
+}

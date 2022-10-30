@@ -38,7 +38,7 @@
                 type="danger"
                 icon="el-icon-delete"
                 size="mini"
-                @click="del(row.id)"
+                @click="del(row.cat_id)"
                 >删除</el-button
               >
             </template>
@@ -53,15 +53,11 @@
       @pagination="getData"
     ></pagin-ation>
     <el-dialog :visible.sync="addCatesDialogVisible" title="添加分类">
-      <el-form :model="addCateForm" :rules="addGoodsRules" ref="addCateRef">
-        <el-form-item
-          prop="cat_name"
-          label="分类名称"
-          :label-width="formLabelWidth"
-        >
-          <el-input v-model="addCateForm.cat_name" />
+      <el-form :model="cateForm" :rules="goodsRules" ref="addCateRef">
+        <el-form-item prop="cat_name" label="分类名称" label-width="80px">
+          <el-input v-model="cateForm.cat_name" />
         </el-form-item>
-        <el-form-item label="父级分类" :label-width="formLabelWidth">
+        <el-form-item label="父级分类" label-width="80px">
           <!-- 
           value / v-model	选中项绑定值  []
           options	可选项数据源，键名可通过 Props 属性配置	array
@@ -89,11 +85,22 @@
         </div>
       </template>
     </el-dialog>
+    <el-dialog title="修改分类" :visible.sync="editDialogVisible">
+      <el-form ref="editCateRef" :model="cateForm" :rules="goodsRules">
+        <el-form-item label="分类名称" prop="cat_name" label-width="80px">
+          <el-input v-model="cateForm.cat_name" autocomplete="off"></el-input>
+        </el-form-item>
+      </el-form>
+      <div slot="footer">
+        <el-button @click="editDialogVisible = false">取 消</el-button>
+        <el-button type="primary" @click="editSubmit">确 定</el-button>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
 <script>
-import { getGoodsCate, addCate, delCate } from "@/api/good";
+import { getGoodsCate, addCate, delCate, editCate } from "@/api/good";
 import BreadCrumb from "@/components/BreadCrumb.vue";
 import PaginAtion from "@/components/PaginAtion.vue";
 export default {
@@ -116,17 +123,17 @@ export default {
       cascaderList: [], //数据源
       selectedCateKey: [], //选中项的值
       addCatesDialogVisible: false,
-      addCateForm: {
+      editDialogVisible: false,
+      cateForm: {
         cat_pid: 0,
         cat_name: "",
         cat_level: 0,
       },
-      addGoodsRules: {
+      goodsRules: {
         cat_name: [
           { required: true, message: "分类名称不能为空", trigger: "blur" },
         ],
       },
-      formLabelWidth: "120px",
     };
   },
   mounted() {
@@ -153,21 +160,21 @@ export default {
       //  [70,80]  选择了二级分类，要添加三级分类
       if (this.selectedCateKey.length === 0) {
         //添加一级分类
-        this.addCateForm.cat_pid = 0;
-        this.addCateForm.cat_level = 0;
+        this.cateForm.cat_pid = 0;
+        this.cateForm.cat_level = 0;
       } else {
         // 分类的父id就是选中的值的数组的最后一项
-        this.addCateForm.cat_pid =
+        this.cateForm.cat_pid =
           this.selectedCateKey[this.selectedCateKey.length - 1];
         // 分类的层级就是数组的长度
-        this.addCateForm.cat_level = this.selectedCateKey.length;
+        this.cateForm.cat_level = this.selectedCateKey.length;
       }
     },
     // 确定添加分类
     addCate() {
       this.$refs.addCateRef.validate(async (isOk) => {
         if (isOk) {
-          await addCate(this.addCateForm);
+          await addCate(this.cateForm);
           this.getData();
           this.$message.success("添加成功");
           this.addCatesDialogVisible = false;
@@ -178,7 +185,7 @@ export default {
     },
     // 监听对话框关闭事件
     close() {
-      this.addCateForm = {
+      this.cateForm = {
         cat_pid: 0, //父分类id
         cat_name: "", //分类名称
         cat_level: 0, //分类层级不能为空，`0`表示一级分类；`1`表示二级分类；`2`表示三级分类
@@ -208,6 +215,22 @@ export default {
             message: "已取消删除",
           });
         });
+    },
+    edit(row) {
+      this.cateForm = row;
+      this.editDialogVisible = true;
+    },
+    editSubmit() {
+      this.$refs.editCateRef.validate(async (isOk) => {
+        if (isOk) {
+          await editCate(this.cateForm.cat_id, this.cateForm);
+          this.getData();
+          this.$message.success("修改成功");
+          this.editDialogVisible = false;
+        } else {
+          return false;
+        }
+      });
     },
   },
 };
